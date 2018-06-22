@@ -32,8 +32,8 @@ body {
 }
 
 .masthead.segment {
-  min-height: 700px;
-  padding: 1em 0 !important;
+  min-height: 100vh;
+  padding: 1em 0;
 }
 
 .masthead .ui.menu .ui.button,
