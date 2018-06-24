@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { Grid } from "semantic-ui-react";
+import { firestoreConnect } from "react-redux-firebase";
 
 import EventList from "../EventList/EventList";
 import { deleteEvent } from "../eventActions";
@@ -8,7 +9,7 @@ import LoadingComponent from "../../../app/layout/LoadingComponent";
 import EventActivity from "../EventActivity/EventActivity";
 
 const mapStateToProps = state => ({
-  events: state.events,
+  events: state.firestore.ordered.events,
   loading: state.async.loading
 });
 
@@ -22,7 +23,6 @@ class EventDashboard extends Component {
   };
 
   render() {
-    console.log(this.props);
     const { events, loading } = this.props;
     if (loading) return <LoadingComponent inverted={true} />;
     return (
@@ -41,4 +41,4 @@ class EventDashboard extends Component {
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(EventDashboard);
+)(firestoreConnect([{ collection: "events" }])(EventDashboard));
