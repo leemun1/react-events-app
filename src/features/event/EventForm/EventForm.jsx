@@ -1,6 +1,7 @@
 /*global google*/
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import { withFirestore } from "react-redux-firebase";
 import { reduxForm, Field } from "redux-form";
 import {
   composeValidators,
@@ -21,13 +22,11 @@ import PlaceInput from "../../../app/common/form/PlaceInput";
 
 const GOOGLE_MAP_KEY = process.env.REACT_APP_GOOGLE_MAP_KEY;
 
-const mapStateToProps = (state, ownProps) => {
-  const eventId = ownProps.match.params.id;
-
+const mapStateToProps = state => {
   let event = {};
 
-  if (eventId && state.events.length > 0) {
-    event = state.events.find(event => event.id === eventId);
+  if (state.firestore.ordered.events && state.firestore.ordered.events[0]) {
+    event = state.firestore.ordered.events[0];
   }
 
   return {
@@ -70,6 +69,16 @@ class EventForm extends Component {
     scriptLoaded: false
   };
 
+  async componentDidMount() {
+    const { firestore, match } = this.props;
+    let event = await firestore.get(`events/${match.params.id}`);
+    if (event.exists) {
+      this.setState({
+        venueLatLng: event.date().venueLatLng
+      });
+    }
+  }
+
   handleScriptLoaded = () => this.setState({ scriptLoaded: true });
 
   handleCitySelect = selectedCity => {
@@ -95,7 +104,6 @@ class EventForm extends Component {
   };
 
   onFormSubmit = values => {
-    values.date = moment(values.date).format();
     values.venueLatLng = this.state.venueLatLng;
     if (this.props.initialValues.id) {
       this.props.updateEvent(values);
@@ -190,11 +198,13 @@ class EventForm extends Component {
   }
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(
-  reduxForm({ form: "eventForm", enableReinitialize: true, validate })(
-    EventForm
+export default withFirestore(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(
+    reduxForm({ form: "eventForm", enableReinitialize: true, validate })(
+      EventForm
+    )
   )
 );
