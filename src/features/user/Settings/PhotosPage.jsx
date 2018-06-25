@@ -1,4 +1,7 @@
 import React, { Component } from "react";
+import { connect } from "react-redux";
+import { firestoreConnect } from "react-redux-firebase";
+import { compose } from "redux";
 import {
   Image,
   Segment,
@@ -12,6 +15,30 @@ import {
 import Dropzone from "react-dropzone";
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
+import { toastr } from "react-redux-toastr";
+
+import { uploadProfileImage } from "../userActions";
+
+const query = ({ auth }) => {
+  return [
+    {
+      collection: "users",
+      doc: auth.uid,
+      subcollections: [{ collection: "photos" }],
+      storeAs: "photos"
+    }
+  ];
+};
+
+const mapStateToProps = state => ({
+  auth: state.firebase.auth,
+  profile: state.firebase.profile,
+  photos: state.firestore.ordered.photos
+});
+
+const mapDispatchToProps = {
+  uploadProfileImage
+};
 
 class PhotosPage extends Component {
   state = {
@@ -19,6 +46,26 @@ class PhotosPage extends Component {
     fileName: "",
     cropResult: null,
     image: {}
+  };
+
+  uploadImage = async () => {
+    try {
+      await this.props.uploadProfileImage(
+        this.state.image,
+        this.state.fileName
+      );
+      this.cancelCrop();
+      toastr.success("Success", "Photo has been uploaded");
+    } catch (error) {
+      toastr.error("Oops", error.message);
+    }
+  };
+
+  cancelCrop = () => {
+    this.setState({
+      files: [],
+      image: {}
+    });
   };
 
   cropImage = () => {
@@ -43,6 +90,13 @@ class PhotosPage extends Component {
   };
 
   render() {
+    const { photos, profile } = this.props;
+    let filteredPhotos;
+    if (photos) {
+      filteredPhotos = photos.filter(photo => {
+        return photo.url !== profile.photoURL;
+      });
+    }
     return (
       <Segment>
         <Header dividing size="large" content="Your Photos" />
@@ -80,10 +134,25 @@ class PhotosPage extends Component {
           <Grid.Column width={4}>
             <Header sub color="teal" content="Step 3 - Preview and Upload" />
             {this.state.files[0] && (
-              <Image
-                style={{ minHeight: 200, minWidth: 200 }}
-                src={this.state.cropResult}
-              />
+              <div>
+                <Image
+                  style={{ minHeight: 200, minWidth: 200 }}
+                  src={this.state.cropResult}
+                />
+                <Button.Group>
+                  <Button
+                    onClick={this.uploadImage}
+                    style={{ width: 100 }}
+                    positive
+                    icon="check"
+                  />
+                  <Button
+                    onClick={this.cancelCrop}
+                    style={{ width: 100 }}
+                    icon="close"
+                  />
+                </Button.Group>
+              </div>
             )}
           </Grid.Column>
         </Grid>
@@ -93,23 +162,32 @@ class PhotosPage extends Component {
 
         <Card.Group itemsPerRow={5}>
           <Card>
-            <Image src="https://randomuser.me/api/portraits/men/20.jpg" />
+            <Image src={profile.photoURL} />
             <Button positive>Main Photo</Button>
           </Card>
 
-          <Card>
-            <Image src="https://randomuser.me/api/portraits/men/20.jpg" />
-            <div className="ui two buttons">
-              <Button basic color="green">
-                Main
-              </Button>
-              <Button basic icon="trash" color="red" />
-            </div>
-          </Card>
+          {photos &&
+            filteredPhotos.map(photo => (
+              <Card key={photo.id}>
+                <Image src={photo.url} />
+                <div className="ui two buttons">
+                  <Button basic color="green">
+                    Main
+                  </Button>
+                  <Button basic icon="trash" color="red" />
+                </div>
+              </Card>
+            ))}
         </Card.Group>
       </Segment>
     );
   }
 }
 
-export default PhotosPage;
+export default compose(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  ),
+  firestoreConnect(auth => query(auth))
+)(PhotosPage);
