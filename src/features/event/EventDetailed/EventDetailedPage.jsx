@@ -35,7 +35,6 @@ class EventDetailedPage extends Component {
     const { event } = this.props;
     const attendees =
       event && event.attendees && objectToArray(event.attendees);
-    console.log(attendees);
     return (
       <Grid>
         <Grid.Column width={10}>
