@@ -9,7 +9,6 @@ import {
   isRequired,
   hasLengthGreaterThan
 } from "revalidate";
-import moment from "moment";
 import { geocodeByAddress, getLatLng } from "react-places-autocomplete";
 import Script from "react-load-script";
 import { Segment, Form, Button, Grid, Header } from "semantic-ui-react";
@@ -73,8 +72,12 @@ class EventForm extends Component {
 
   async componentDidMount() {
     const { firestore, match } = this.props;
-
     await firestore.setListener(`events/${match.params.id}`);
+  }
+
+  async componentWillUnmount() {
+    const { firestore, match } = this.props;
+    await firestore.unsetListener(`events/${match.params.id}`);
   }
 
   handleScriptLoaded = () => this.setState({ scriptLoaded: true });
