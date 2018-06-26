@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { Grid } from "semantic-ui-react";
+import { Grid, Loader } from "semantic-ui-react";
 import { firestoreConnect } from "react-redux-firebase";
 
 import EventList from "../EventList/EventList";
@@ -18,24 +18,61 @@ const mapDispatchToProps = {
 };
 
 class EventDashboard extends Component {
-  componentDidMount() {
-    this.props.getEventsForDashboard();
+  state = {
+    moreEvents: false,
+    loadingInitial: true,
+    loadedEvents: []
+  };
+
+  async componentDidMount() {
+    let next = await this.props.getEventsForDashboard();
+
+    if (next && next.docs && next.docs.length > 1) {
+      this.setState({
+        moreEvents: true,
+        loadingInitial: false
+      });
+    }
   }
 
-  handleDeleteEvent = eventId => () => {
-    this.props.deleteEvent(eventId);
+  componentWillReceiveProps(nextProps) {
+    if (this.props.events !== nextProps.events) {
+      this.setState({
+        loadedEvents: [...this.state.loadedEvents, ...nextProps.events]
+      });
+    }
+  }
+
+  getNextEvents = async () => {
+    const { events } = this.props;
+    let lastEvent = events && events[events.length - 1];
+    let next = await this.props.getEventsForDashboard(lastEvent);
+    if (next && next.docs && next.docs.length <= 1) {
+      this.setState({
+        moreEvents: false
+      });
+    }
   };
 
   render() {
-    const { events, loading } = this.props;
-    if (loading) return <LoadingComponent inverted={true} />;
+    const { loading } = this.props;
+    const { moreEvents, loadedEvents } = this.state;
+    if (this.state.loadingInitial) return <LoadingComponent inverted={true} />;
     return (
       <Grid>
         <Grid.Column width={10}>
-          <EventList events={events} deleteEvent={this.handleDeleteEvent} />
+          <EventList
+            loading={loading}
+            moreEvents={moreEvents}
+            getNextEvents={this.getNextEvents}
+            events={loadedEvents}
+          />
         </Grid.Column>
         <Grid.Column width={6}>
           <EventActivity />
+        </Grid.Column>
+        <Grid.Column width={10}>
+          <Loader active={loading} />
         </Grid.Column>
       </Grid>
     );
