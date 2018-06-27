@@ -27,7 +27,7 @@ class EventListItem extends Component {
                     style={{ top: "-40px" }}
                     ribbon="right"
                     color="red"
-                    content="This event has been cancelled"
+                    content="CANCELLED"
                   />
                 )}
               </Item.Content>

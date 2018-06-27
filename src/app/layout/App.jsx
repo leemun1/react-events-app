@@ -1,6 +1,8 @@
 import React, { Component, Fragment } from "react";
 import { Container } from "semantic-ui-react";
 import { Route, Switch } from "react-router-dom";
+
+import NotFound from "../../app/layout/NotFound";
 import NavBar from "../../features/nav/NavBar/NavBar";
 import HomePage from "../../features/home/HomePage";
 import EventDashboard from "../../features/event/EventDashboard/EventDashboard";
@@ -50,6 +52,8 @@ class App extends Component {
                     path="/createEvent"
                     component={UserIsAuthenticated(EventForm)}
                   />
+                  <Route path="/error" component={NotFound} />
+                  <Route component={NotFound} />
                 </Switch>
               </Container>
             </Fragment>
