@@ -1,7 +1,9 @@
 import React, { Component, Fragment } from "react";
 import { Container } from "semantic-ui-react";
 import { Route, Switch } from "react-router-dom";
+import Loadable from "react-loadable";
 
+import LoadingComponent from "../../app/layout/LoadingComponent";
 import NotFound from "../../app/layout/NotFound";
 import NavBar from "../../features/nav/NavBar/NavBar";
 import HomePage from "../../features/home/HomePage";
@@ -14,13 +16,18 @@ import EventDetailedPage from "../../features/event/EventDetailed/EventDetailedP
 import ModalManager from "../../features/modals/ModalManager";
 import { UserIsAuthenticated } from "../../features/auth/authWrapper";
 
+const AsyncHomePage = Loadable({
+  loader: () => import("../../features/home/HomePage"),
+  loading: LoadingComponent
+});
+
 class App extends Component {
   render() {
     return (
       <Fragment>
         <ModalManager />
         <Switch>
-          <Route exact path="/" component={HomePage} />
+          <Route exact path="/" component={AsyncHomePage} />
         </Switch>
 
         <Route
